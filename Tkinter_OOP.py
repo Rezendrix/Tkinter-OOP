@@ -12,12 +12,12 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Callable
 
-# para abrir imagens que não sejam .gif
+# to open non gif images
 #from PIL import ImageTk
 
 class StatusCode(IntEnum):
     ''' Codes passed as parameters to the function notify(status_code : StatusCode)
-    So it calls the respective if/else block on the Controler.update() function.'''
+    So it calls the respective method on the Controler.update() function.'''
     CLOSE_BROWSER_DRIVER = auto()
     CHECK_LOGIN = auto()
     LOG_IN = auto()
