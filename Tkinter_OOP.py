@@ -516,7 +516,6 @@ class Model:
 def main():
     root = tk.Tk()
 
-    # Dummy Observer Object - para testar a dependency injection do GUI_Event_Handler na classe GUI_Manager.
     controller = Controller()
     
     event_handler = GUI_Event_Handler()
