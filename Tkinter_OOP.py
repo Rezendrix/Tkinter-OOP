@@ -7,13 +7,12 @@ https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-app
 Pass arguments to a tkinter button 
 https://stackoverflow.com/questions/6920302/how-to-pass-arguments-to-a-button-command-in-tkinter
 '''
-
 from enum import IntEnum, auto
 import tkinter as tk
 from tkinter import ttk
 from typing import Callable
 
-# To open non .gif images
+# para abrir imagens que não sejam .gif
 #from PIL import ImageTk
 
 class StatusCode(IntEnum):
@@ -30,7 +29,7 @@ class StatusCode(IntEnum):
 program_version = 'Alpha 0.0'
 
 class GUI_Event_Handler:
-    '''Sends Events to the Controller'''
+    '''Sends Eventos to the Controller'''
     # observers/subscribers list
     observers = []
 
@@ -46,7 +45,7 @@ class GUI_Event_Handler:
         return
 
 
-    def notify(self, status_code : StatusCode, **kwargs):
+    def notify(self, status_code : StatusCode, *args, **kwargs):
         '''### Descrição
         Notifies the observers/subscribers about states changes inside GUI_Manager
         calling the function update() on each observer
@@ -55,7 +54,7 @@ class GUI_Event_Handler:
         @status_code : int -- Event Status_Code
         '''
         for observer in self.observers:
-            observer.update(status_code, kwargs)
+            observer.update(status_code, *args, **kwargs)
         return
 
 
@@ -103,7 +102,7 @@ class GUI_Manager:
 
     def close_program(self):
         '''Notifies observers about program closing so they can end their processes.'''
-        self.notify(StatusCode.CLOSE_BROWSER_DRIVER)
+        self.notify(StatusCode.CLOSE_BROWSER_DRIVER, 'Dummy Object Notificado - CLOSE_BROWSER_DRIVER.')
         self.master.quit()
         return
 
@@ -143,7 +142,7 @@ class Guia1(ttk.Frame):
         super().__init__(master, *args, **kwargs)
         self.notify = notifier
         self.label = ttk.Label(self, text='TAB 1', style='Heading.TLabel')
-        self.button_notify = ttk.Button(self, text = 'Notify', width = 25, command = lambda : self.notify(StatusCode.DUMMY_TEST))
+        self.button_notify = ttk.Button(self, text = 'Notify', width = 25, command = lambda : self.notify(StatusCode.DUMMY_TEST, 'Dummy Test Called'))
         self.button_destroy = ttk.Button(self, text = 'Close TAB', width = 25, command = lambda : self.destroy())
         self.configure_styles()
         self.configure_grid()
@@ -252,7 +251,7 @@ class NewWindow2(tk.Toplevel):
         self.notify = notifier
         super().__init__(master = master)
         self.frame = tk.Frame(self)
-        self.button_notify = tk.Button(self.frame, text = 'Notify', width = 25, command = lambda : self.notify(StatusCode.POS_GENERATED_BIND, teste='Arg passed.'))
+        self.button_notify = tk.Button(self.frame, text = 'Notify', width = 25, command = lambda : self.notify(StatusCode.POS_GENERATED_BIND))
         self.button_close = tk.Button(self.frame, text = 'Close', width = 25, command = self.destroy)
 
         self.frame.grid(row = 0, column = 0)
@@ -402,15 +401,15 @@ class Login:
 
     def set_login_credentials(self):
         ''' Stores login and password '''
-        self.login = self.entry_username.get()
-        self.password = self.entry_password.get()
+        #self.login = self.entry_username.get()
+        #self.password = self.entry_password.get()
 
-        if not self.login or not self.password:
+        if not self.entry_username.get() or not self.entry_password.get():
             self.label_error_message['text'] = 'Insert username and password'
         else:
             self.label_error_message['text'] = ''
+            self.notify(StatusCode.LOG_IN, self.entry_password.get(), self.entry_password.get())
             self.login_window.destroy()
-            self.notify(StatusCode.FAZER_LOGIN)
 
 
 class LoginStatus:
@@ -479,20 +478,31 @@ class Controller:
     def __init__(self):
         self.model = Model()
 
-    def update(self, status_code, kwargs):
-        if status_code == StatusCode.DUMMY_TEST:
-            print('Dummy Object Notified - DUMMY_TEST.')
-        elif status_code == StatusCode.LOG_IN:
-            print('Dummy Object Notified - FAZER_LOGIN.')
-        elif status_code == StatusCode.CLOSE_BROWSER_DRIVER:
-            print('Dummy Object Notificado - CLOSE_BROWSER_DRIVER.')
-        elif status_code == StatusCode.DO_SOMETHING:
-            self.model.do_something()
-        elif status_code == StatusCode.POS_GENERATED_BIND:
-            self.model.pos_generated_bind()
+        '''A dispatch table in Python is basically a dictionary of functions. 
+        This concept is not Python-specific, rather quite common in Computer Science.
+        A dispatch table is a table of pointers to functions or methods. 
+        Dispatch tables are among the most common approaches in OOP to implement late binding'''
+        self.dispatch_table = {
+            StatusCode.DUMMY_TEST: print,
+            StatusCode.LOG_IN: self.model.log_in,
+            StatusCode.CLOSE_BROWSER_DRIVER: print,
+            StatusCode.DO_SOMETHING: self.model.do_something,
+            StatusCode.POS_GENERATED_BIND: self.model.pos_generated_bind,
+            StatusCode.CHECK_LOGIN: self.model.check_login}
 
+    def update(self, status_code, *args, **kwargs):
+        self.dispatch_table[status_code](*args, **kwargs)
+        
 
 class Model:
+    def check_login(self, ra, tipo_historico):
+        print('Model received ra and history type.')
+        print(ra, tipo_historico)
+
+    def log_in(self, username, password):
+        if username and password:
+            print(f'Model Logged the user in! {username} - {password}')
+
     def do_something(self):
         print('Model did something. Ohhhh!')
 
@@ -500,6 +510,8 @@ class Model:
         print('''This function was binded to a button in a class that did not \
             exist on the moment when Controller was created. Thus, event handler is more \
             flexible than bind.''')
+
+
 
 def main():
     root = tk.Tk()
